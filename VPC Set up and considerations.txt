@@ -1,0 +1,225 @@
+VPC Set up and considerations:
+
+🧠 CIDR Range Considerations (Plan Before You Build)
+	- 📏 What size CIDR block should I use?
+	- Start with the largest sensible block you might need long-term — AWS allows from /28 (16 IPs) 	   to /16 (65,536 IPs).
+	- Most common VPC base block: /16 for large flexibility.
+	- Subnets: usually /20 (4096 IPs) or /24 (256 IPs).
+
+
+Demo used IPs:
+	On-premise - 192.168.10.0/24
+	AWS Pilot  - 10.0.0.0/16
+	Azure      - 172.31.0.0/16
+
+So need to avoid IPs:
+	192.168.10.0/24           (192.168.0.0 -> 195.168.10.255)
+	10.0.0.0/16     (AWS)     (10.0.0.0    -> 10.0.255.255)    
+	172.31.0.0/16	(Azure)   (172.31.0.0  -> 172.31.255.255)
+
+Plus these:
+	192.168.15.0/24 (London)  (192.168.15.0 -> 192.168.15.255)
+	192.168.20.0/24 (New York)(192.168.20.0 -> 192.168.20.255)
+	192.168.25.0/24 (Seattle) (192.168.25.0 -> 192.168.25.255)
+	10.128.0.0/9    (Google)  (10.128.0.0   -> 10.255.255.255)
+
+Get IPs addresses plan DO NOT USE ANY OF THESE
+These can you clash with your IPs
+Avoid using Default IP address 172.31.0.0
+
+
+More Considerations:
+	VPC minimum /28 (16 IP), maximum /16 (65536 IPs)
+	Personal preference for the 10.x.y.z range
+	Avoid common ranges – avoid future issues
+	Reserve 2+ networks per region being used per account
+	3 US, Europe, Australia (5) x2 – Assume 4 Accounts
+	Total 40 ranges (ideally)
+
+
+***** 2 PICS  ********
+
+	pic-1
+	pic-2
+
+VPC Set:
+
+	Always add one more spare AZ
+		AZ1 - AZ2 - AZ3 - AZ(spare)
+	Do the same for SN
+		web - app - db - Spare
+
+***** 1 PICS  ********
+
+	pic-3
+
+
+Proposal:
+
+	- Animals4life could become a huge global entity
+	- Use the 10.16 -> 10.127 range (avoiding google)
+	- Start at 10.16 (US1), 10.32 (US2), 10.48 (US3), 10.64 (EU), 10.80 (Australia) – each AWS 	  account has 1/4th
+	- /16 per VPC – 3 AZ (+1), 3 Tiers (+1) – 16 subnets
+	- /16 split into 16 subnets = /20 per subnet (4091 IPs)
+
+***** 7 PICS  ********
+
+	pic-4(a,b,c,d,e,f) % pic-5
+
+---------------------------------------------------------------------------------------------------
+
+Custom VPC:
+
+Where gonna create this architecture
+A custom VPC design that spans multiple Availability Zones with tiered subnets for DB, APP, and WEB layers
+
+***** 1 PICS  ********
+
+	pic-6
+
+🌐 VPC Key Characteristics
+
+	- Regional Scope – VPC spans all Availability Zones (AZs) in the chosen region
+	- Fully Isolated Network – by default, no inbound or outbound traffic is allowed
+	- Explicit Traffic Control – Everything must be explicitly configured (routes, SGs, NACLs)
+	- Highly Flexible – Supports both simple flat networks and complex multi-tier architectures
+	- Hybrid-Ready – Can connect to on-prem or other clouds via VPN or Direct Connect
+	- Custom Tenancy – Choose between Default or Dedicated Tenancy for instances
+
+
+🧱 IP Address Planning
+	- 1 Primary Private IPv4 CIDR Block required
+	- Minimum size: /28 (16 IPs)
+	- Maximum size: /16 (65,536 IPs)
+	- Optional Secondary IPv4 CIDR Blocks can be added for expansion
+	- Optional IPv6 Support via 1 assigned /56 CIDR block
+
+---------------------------------------------------------------------------------------------------
+
+In the architecture theres a NAT GW that's very expensive ( 
+	💰 How much does a NAT Gateway cost?
+	In London (eu-west-2) region for example:
+
+	Cost Component	Price
+	NAT Gateway hourly	~$0.045/hour
+	Per GB data processed	~$0.045/GB
+
+	⚠️ So, running 1 NAT Gateway for a month (24/7) =
+	0.045 * 24 * 30 = ~$32.40/month — before any data transfer!
+
+	Add data usage (say 50GB outbound a month):
+	50 * 0.045 = $2.25
+
+	Total: ~$34.65/month for light usage.
+)
+
+---------------------------------------------------------------------------------------------------
+
+ADemo for me to build that's cheaper
+
+***** 2 PICS  ********
+	A demo for me to build-1/2
+
+---------------------------------------------------------------------------------------------------
+
+
+🏘️ What Is VPC Tenancy?
+VPC tenancy refers to how your EC2 instances are physically hosted — whether they share hardware with others or run on dedicated physical servers.
+
+🔹 1. Default Tenancy (the normal option)
+🛠️ Shared hardware — your EC2s run on servers shared with other AWS customers
+✅ Fully isolated via virtualization
+💸 Much cheaper
+✅ Eligible for EC2 Savings Plans, Spot, and Free Tier
+Best for: 99% of use cases (personal, startup, dev, prod)
+
+🔸 2. Dedicated Tenancy
+🏢 Your EC2 instances are launched on dedicated physical hardware just for you
+🧾 More expensive
+🚫 No spot instances or savings plans
+✅ Required for some compliance (e.g., HIPAA, PCI DSS)
+Best for: Highly regulated industries, sensitive workloads, paranoid government stuff 😅
+
+
+
+
+
+---------------------------------------------------------------------------------------------------
+
+Subnests:
+
+	🧱 Subnets & AZ Resilience – Simplified
+	Subnets live inside a single Availability Zone (AZ)
+	→ One subnet belongs to only one AZ
+	→ One AZ can have many subnets
+	
+	Each subnet’s IP range (CIDR) must come from the VPC's range
+	→ Example: If VPC is 10.0.0.0/16, subnet could be 10.0.1.0/24
+
+	Subnets cannot overlap — each must have a unique range
+
+	IPv6 is optional
+	→ If used, subnets get a /64 block from the VPC's /56 IPv6 range
+	→ You can create 256 IPv6 subnets from a single /56
+
+	All subnets in a VPC can talk to each other by default
+	→ No special routes needed for internal subnet-to-subnet communication
+
+
+📦 Subnet IP Addressing – AWS Rules
+🔒 AWS Reserves 5 IPs per subnet:
+	These can’t be used by your EC2 instances:
+
+	Example Subnet: 10.16.16.0/20
+	Full range: 10.16.16.0 → 10.16.31.255
+
+	Reserved IP	Usage
+	10.16.16.0	Network Address (base of the subnet)
+	10.16.16.1	VPC Router (used for internal routing)
+	10.16.16.2	Reserved for DNS service
+	10.16.16.3	Reserved for future use
+	10.16.31.255	Broadcast address (last IP in subnet)
+
+⚠️ Takeaway:
+	Out of every subnet, 5 IPs are automatically taken
+	So if you have a /24 (256 IPs), you really get 251 usable
+
+
+---------------------------------------------------------------------------------------------------
+
+create vpc with amazon ip6an then go to settings and make sure dns settings both re selected
+
+create subnets for that vpc
+
+sn-reserved-A 10.16.0.0/20 AZA IPv6 00
+sn-db-A 10.16.16.0/20 AZA IPv6 01
+sn-app-A 10.16.32.0/20 AZA IPv6 02
+sn-web-A 10.16.48.0/20 AZA IPv6 03
+
+sn-reserved-B 10.16.64.0/20 AZB IPv6 04
+sn-db-B 10.16.80.0/20 AZB IPv6 05
+sn-app-B 10.16.96.0/20 AZB IPv6 06
+sn-web-B 10.16.112.0/20 AZB IPv6 07
+
+sn-reserved-C 10.16.128.0/20 AZC IPv6 08
+sn-db-C 10.16.144.0/20 AZC IPv6 09
+sn-app-C 10.16.160.0/20 AZC IPv6 0A
+sn-web-C 10.16.176.0/20 AZC IPv6 0B
+
+then set up IG:
+
+set all 3 sebs to buplic in sn association
+
+then the routes set 0.0.0.0./0 for the ip4 adnd the ::/0 for ip6 bith the the IGW
+
+
+after that go back to SN and selectct web-1 and then axtions and then Edit subnet settings
+and chang ethe auto assign to ip4 and ip6
+
+
+create an instance an dthen run uo in SSH on local pc and then if you get the bird symle your good  and to make  100% sure run  "curl https://checkip.amazonaws.com
+"
+
+
+
+

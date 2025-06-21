@@ -1,0 +1,147 @@
+🧠 EC2 Docker Deployment – Web Gallery or Python Scraper
+✅ 1. SSH into EC2
+
+ssh -i "C:\Users\User\OneDrive\Desktop\AWS COURSE OPT\AWS-small-PROJECTS\docker_folder\docker_ec2_kp.pem" ec2-user@18.204.217.60
+
+---------------------------------------------------------------------------------------------------
+
+
+🔧 2. Docker Setup (ONLY if needed)
+(You’ve already done this once, but if it’s a fresh instance, repeat.)
+
+# Install Docker
+
+sudo yum update -y
+sudo yum install docker -y
+
+# Run docker
+
+sudo service docker start
+sudo usermod -aG docker ec2-user
+
+✅ Check it’s running:
+
+docker --version
+sudo systemctl status docker
+
+
+---------------------------------------------------------------------------------------------------
+
+🗂️ 3. Upload Files ******** FROM LOCAL PC ********* to EC2 (PowerShell)
+#     Navigate to the folder that holds your project folder, e.g.:
+
+
+cd "C:\Users\User\OneDrive\Desktop\AWS COURSE OPT\AWS-small-PROJECTS\docker_folder"
+
+# Then copy your whole project folder (e.g. test-docker-ec2) to EC2:
+
+scp -i "docker_ec2_kp.pem" -r linux-commands-website ec2-user@18.204.217.60:~
+
+---------------------------------------------------------------------------------------------------
+
+📂 4. On EC2: Navigate to folder
+
+cd ~/test-docker-ec2
+
+# Or Get from Docker
+
+docker login
+docker pull darrenfawcett2448/jobsearch-scraper:latest
+
+# List files to confirm:
+
+ls
+
+# You should see:
+
+nginx
+
+Dockerfile  index.html  images/  requirements.txt  web_scrape_pythonorg.py
+
+---------------------------------------------------------------------------------------------------
+
+🐳 5. Build Docker Image
+#     For HTML gallery:
+   
+docker build -t linux-commands-website .
+
+# For Python scraper (if that’s your Dockerfile config):
+
+docker build -t python-scraper .
+
+---------------------------------------------------------------------------------------------------
+
+▶️ 6. Run Container
+#     For the HTML gallery:
+
+docker run -d -p 80:80 --name linux-gallery-container linux-gallery
+
+# For a Python job (non-server):
+
+docker run --rm python-scraper
+
+---------------------------------------------------------------------------------------------------
+
+🧪 7. Check Running Containers
+
+docker ps
+
+Look for something like:
+
+nginx
+
+CONTAINER ID   IMAGE          PORTS
+abc123456789   linux-gallery  0.0.0.0:80->80/tcp
+
+---------------------------------------------------------------------------------------------------
+
+🌐 8. Open in Browser
+# Use your EC2 Public IP, e.g.:
+
+http://35.173.198.162
+
+
+---------------------------------------------------------------------------------------------------
+
+🧹 9. Optional Cleanup Commands
+#   Remove images/containers:
+
+docker stop <container_id>
+docker rm <container_id>
+docker rmi <image_id>
+
+#  Delete files from EC2:
+
+rm -rf test-docker-ec2
+
+---------------------------------------------------------------------------------------------------
+
+🐋 10. Push Docker Image to DockerHub (Optional)
+🔐 Log in:
+
+docker login
+
+🏷️ Tag your image:
+
+docker tag linux-gallery darrenfawcett2448/linux-gallery:latest
+docker tag python-scraper darrenfawcett2448/python-scraper:latest
+
+docker tag linux-gallery-webs darrenfawcett2448/linux-gallery-webs:latest
+
+
+
+⬆️ Push to DockerHub:
+
+docker push darrenfawcett2448/linux-gallery:latest
+docker push darrenfawcett2448/python-scraper:latest
+
+---------------------------------------------------------------------------------------------------
+
+✅ Bonus Notes
+
+Dockerfile must be inside the folder you run docker build from.
+
+Use . at the end of build command — it means “build from this directory”.
+
+You can upload a whole folder via scp -r.
+

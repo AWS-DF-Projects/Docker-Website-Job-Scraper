@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Linux Commands</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #1e1e1e;
+        color: #eee;
+        margin: 0;
+        padding: 0;
+      }
+      .container {
+        margin: 40px auto;
+        max-width: 1400px;
+        padding: 24px;
+        background: #282828;
+        border-radius: 18px;
+        box-shadow: 0 0 16px rgba(0, 0, 0, 0.2);
+      }
+      h1 {
+        text-align: center;
+        margin-bottom: 32px;
+        font-size: 2.5rem;
+        letter-spacing: 2px;
+      }
+      .grid-layout {
+        column-count: 3;
+        column-gap: 32px;
+        width: 100%;
+      }
+      .command-card {
+        break-inside: avoid;
+        margin-bottom: 32px;
+        display: block;
+      }
+
+      .gallery-image {
+        width: 350px;
+        border-radius: 14px;
+        box-shadow: 0 0 18px #111;
+        margin: 0 0 24px 0;
+        background: #111;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Linux Commands</h1>
+
+      <!-- Example command cards: place each card inside .grid-layout for even spacing -->
+      <div class="grid-layout" id="gallery">
+        <!-- Images will be injected here by JavaScript -->
+      </div>
+    </div>
+    <script>
+      const images = [
+        'images/Screenshot 2025-06-11 100702.png',
+        'images/Screenshot 2025-06-11 100724.png',
+        'images/Screenshot 2025-06-11 100728.png',
+        'images/Screenshot 2025-06-11 100708.png',
+        'images/Screenshot 2025-06-11 100715.png',
+        'images/Screenshot 2025-06-11 100721.png',
+        'images/Screenshot 2025-06-11 100718.png',
+      ];
+
+      const gallery = document.getElementById('gallery');
+      images.forEach((img) => {
+        const el = document.createElement('img');
+        el.src = img;
+        el.className = 'gallery-image';
+        gallery.appendChild(el);
+      });
+    </script>
+  </body>
+</html>
